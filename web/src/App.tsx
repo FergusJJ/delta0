@@ -1,4 +1,5 @@
 import Banner from "./components/Banner/Banner";
+import Home from "./components/Home/Home";
 import s from "./App.module.css";
 import { Route, Routes } from "react-router-dom";
 /*
@@ -23,14 +24,6 @@ function Screen2() {
   return (
     <div>
       <p>screen 2</p>
-    </div>
-  );
-}
-
-function Home() {
-  return (
-    <div>
-      <p>home</p>
     </div>
   );
 }
