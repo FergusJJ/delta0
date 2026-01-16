@@ -1,7 +1,7 @@
 import Banner from "./components/Banner/Banner";
 import Home from "./components/Home/Home";
 import s from "./App.module.css";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 /*
  * Need:
  * Landing page
@@ -29,6 +29,7 @@ function Screen2() {
 }
 
 function App() {
+  const location = useLocation();
   return (
     <div className={s.main}>
       <Banner />
@@ -36,6 +37,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/screen-2" element={<Screen2 />} />
       </Routes>
+      {location.pathname === "/" ? (
+        <footer className={s.footer}>
+          <p>footer content here</p>
+        </footer>
+      ) : (
+        <></>
+      )}
     </div>
   );
 }

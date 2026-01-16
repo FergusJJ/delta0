@@ -2,6 +2,8 @@ import client from "../../util/client";
 import s from "./Home.module.css";
 import { useActiveWallet, useConnectModal } from "thirdweb/react";
 import { useNavigate } from "react-router-dom";
+import { MdOutlineArrowOutward } from "react-icons/md";
+import Button from "../Button/Button";
 
 function HomeCopy() {
   const title = "Delta0";
@@ -33,11 +35,15 @@ function GetStarted() {
 
   const label = "Get Started";
   return (
-    <div>
-      <button disabled={isConnecting} onClick={handleClick}>
-        {label}
-      </button>
-    </div>
+    <Button
+      color="var(--bg-dark)"
+      bgColor="var(--accent-green)"
+      disabled={isConnecting}
+      onClick={handleClick}
+      label={label}
+      icon={<MdOutlineArrowOutward />}
+      glow
+    />
   );
 }
 
