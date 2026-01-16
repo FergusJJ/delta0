@@ -1,5 +1,7 @@
 import Banner from "./components/Banner/Banner";
+//import Trade from "./Trade";
 import s from "./App.module.css";
+import Trade from "./Trade";
 import { Route, Routes } from "react-router-dom";
 /*
  * Need:
@@ -17,15 +19,24 @@ import { Route, Routes } from "react-router-dom";
   on deploy we should get the deployed contract address and
   the functions as const
 
- * */
+  can just do useAccount from wagmi? -> makes call to metamask extension
+  user can connect their wallet via this
 
-function Screen2() {
-  return (
-    <div>
-      <p>screen 2</p>
-    </div>
-  );
-}
+
+  Routing -> React router
+  Can just have something like
+
+  <Route path={'/'}>
+    <HomePage />
+  </Route>
+
+
+
+  }
+
+
+
+ * */
 
 function Home() {
   return (
@@ -41,7 +52,7 @@ function App() {
       <Banner />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/screen-2" element={<Screen2 />} />
+        <Route path="/trade" element={<Trade />} />
       </Routes>
     </div>
   );
