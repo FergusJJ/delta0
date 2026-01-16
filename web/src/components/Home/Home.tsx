@@ -1,9 +1,12 @@
-import client from "../../util/client";
 import s from "./Home.module.css";
-import { useActiveWallet, useConnectModal } from "thirdweb/react";
-import { useNavigate } from "react-router-dom";
-import { MdOutlineArrowOutward } from "react-icons/md";
-import Button from "../Button/Button";
+import GetStarted from "./Components/GetStarted";
+import { FeatureGrid, FeatureBox } from "../FeatureGrid/FeatureGrid";
+import {
+  MdShield,
+  MdSpeed,
+  MdShowChart,
+  MdAccountBalance,
+} from "react-icons/md";
 
 function HomeCopy() {
   const title = "Delta0";
@@ -17,33 +20,36 @@ function HomeCopy() {
   );
 }
 
-function GetStarted() {
-  const navigate = useNavigate();
-  const wallet = useActiveWallet();
-  const { connect, isConnecting } = useConnectModal();
-  const handleClick = () => {
-    if (!wallet) {
-      void handleConnect();
-      return;
-    }
-    navigate("/screen-2");
-  };
-  const handleConnect = async () => {
-    const wallet = await connect({ client }); // opens the connect modal
-    console.log("connected to", wallet);
-  };
-
-  const label = "Get Started";
+function WhySection() {
   return (
-    <Button
-      color="var(--bg-dark)"
-      bgColor="var(--accent-green)"
-      disabled={isConnecting}
-      onClick={handleClick}
-      label={label}
-      icon={<MdOutlineArrowOutward />}
-      glow
-    />
+    <section className={s.whySection}>
+      <h2 className={s.whyTitle}>Why Delta0?</h2>
+      <p className={s.whySubtitle}>
+        Stable yields through delta-neutral hedging strategies
+      </p>
+      <FeatureGrid layout={["1fr", "1fr", "1fr", "1fr"]}>
+        <FeatureBox
+          icon={<MdShield />}
+          title="Delta Neutral"
+          description="Your position is fully hedged, eliminating directional market risk while generating consistent yield."
+        />
+        <FeatureBox
+          icon={<MdSpeed />}
+          title="Real-Time Hedging"
+          description="Automated rebalancing ensures your position stays neutral as market conditions change."
+        />
+        <FeatureBox
+          icon={<MdShowChart />}
+          title="Transparent Yields"
+          description="All yield sources are on-chain and verifiable. No hidden fees or opaque strategies."
+        />
+        <FeatureBox
+          icon={<MdAccountBalance />}
+          title="Institutional Grade"
+          description="Battle-tested smart contracts with comprehensive audits and proven security measures."
+        />
+      </FeatureGrid>
+    </section>
   );
 }
 
@@ -52,6 +58,7 @@ export default function Home() {
     <div className={s.homeWrapper}>
       <HomeCopy />
       <GetStarted />
+      <WhySection />
     </div>
   );
 }
