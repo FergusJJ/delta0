@@ -1,6 +1,6 @@
-import Button from "./components/Button/Button";
 import Banner from "./components/Banner/Banner";
 import s from "./App.module.css";
+import { Route, Routes } from "react-router-dom";
 /*
  * Need:
  * Landing page
@@ -36,44 +36,31 @@ import s from "./App.module.css";
 
  * */
 
+function Screen2() {
+  return (
+    <div>
+      <p>home</p>
+    </div>
+  );
+}
+
+function Home() {
+  return (
+    <div>
+      <p>home</p>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <>
-      <div className={s.main}>
-        <Banner />
-        <Button
-          rounded={true}
-          onClick={() => {
-            console.log("clicked");
-          }}
-          size="S"
-          label={"btn rounded S"}
-        />
-        <Button
-          rounded={true}
-          onClick={() => {
-            console.log("clicked");
-          }}
-          size="M"
-          label={"btn rounded M"}
-        />
-
-        <Button
-          onClick={() => {
-            console.log("clicked");
-          }}
-          size="S"
-          label={"btn S"}
-        />
-        <Button
-          onClick={() => {
-            console.log("clicked");
-          }}
-          size="M"
-          label={"btn M"}
-        />
-      </div>
-    </>
+    <div className={s.main}>
+      <Banner />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/screen-2" element={<Screen2 />} />
+      </Routes>
+    </div>
   );
 }
 
