@@ -1,17 +1,26 @@
+import classNames from "classnames";
 import s from "./FeatureBox.module.css";
 
-type FeatureBoxProps = {
-  icon: React.ReactNode;
+export type FeatureBoxProps = {
+  icon?: React.ReactNode;
   title: string;
-  description: string;
+  description?: string;
+  rootClassNames?: string;
+  titleClassNames?: string;
 };
 
-export function FeatureBox({ icon, title, description }: FeatureBoxProps) {
+export function FeatureBox({
+  icon,
+  title,
+  description,
+  rootClassNames,
+  titleClassNames,
+}: FeatureBoxProps) {
   return (
-    <div className={s.featureBox}>
-      <div className={s.iconWrapper}>{icon}</div>
-      <h3 className={s.featureTitle}>{title}</h3>
-      <p className={s.featureDescription}>{description}</p>
+    <div className={classNames(s.featureBox, rootClassNames)}>
+      {icon && <div className={s.iconWrapper}>{icon}</div>}
+      <h3 className={classNames(s.featureTitle, titleClassNames)}>{title}</h3>
+      {description && <p className={s.featureDescription}>{description}</p>}
     </div>
   );
 }
