@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
 body {
-  background-color: #171717;
-  color: white;
+  --bg-dark: #070b09;
+  /* The "Racing Green" deep black background */
+  --accent-green: #00f554;
+  /* The signature "Spring Green" accent */
+  --text-primary: #fafafa;
+  /* "Alabaster" white for headings and main text */
+  --text-secondary: #8a8d8b;
+  /* Muted grey-green for subtext and descriptions */
+
+  /* Semantic UI Colors */
+  --bg-card: #0d1210;
+  /* Slightly lighter dark for cards and sections */
+  --border-subtle: #1a201d;
+  /* Dark borders to separate sections */
+  --bg-hover: #141b17;
+  /* Hover state for buttons or menu items */
+
+  /* Utilities */
+  --shadow-glow: 0 0 15px rgba(0, 245, 84, 0.3);/
 }
 
 @media (prefers-color-scheme: dark) {
