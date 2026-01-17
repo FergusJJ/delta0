@@ -13,6 +13,7 @@ export default defineConfig({
       "@public": path.resolve(__dirname, "./public"),
       "@util": path.resolve(__dirname, "./src/util"),
       "@service": path.resolve(__dirname, "./src/service"),
+      "@constants": path.resolve(__dirname, "./src/constants"),
     },
   },
 });

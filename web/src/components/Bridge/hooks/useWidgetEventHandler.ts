@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 // Docs: https://docs.li.fi/widget/widget-events
 import { useWidgetEvents, WidgetEvent } from "@lifi/widget";
-import type { WidgetEvents } from "@lifi/widget";
-import type { BridgeState, BridgeStep, RouteInfo } from "../types";
+import type { LiFiStep, WidgetEvents } from "@lifi/widget";
+import type { BridgeState, BridgeStep, RouteInfo, StepStatus } from "../types";
 import { getChainName } from "@util/util";
 
 // Widget event types from WidgetEvents
@@ -32,7 +32,7 @@ interface RouteStep {
 }
 
 function extractRouteInfo(route: Route): RouteInfo {
-  const steps = route.steps as RouteStep[];
+  const steps = route.steps;
   return {
     fromAmount: route.fromAmount,
     toAmount: route.toAmount,
@@ -51,7 +51,7 @@ function extractRouteInfo(route: Route): RouteInfo {
 
 function extractStepsFromRoute(route: Route): BridgeStep[] {
   const bridgeSteps: BridgeStep[] = [];
-  const steps = route.steps as RouteStep[];
+  const steps: Array<LiFiStep> = route.steps;
 
   steps.forEach((step: RouteStep, index: number) => {
     // Add approval step if needed
@@ -118,7 +118,7 @@ export function useWidgetEventHandler({
 
     const handleRouteExecutionUpdated = (update: RouteExecutionUpdate) => {
       const { route, process } = update;
-      const steps = route.steps as RouteStep[];
+      const steps: Array<RouteStep> = route.steps;
 
       onStateChange((prev) => {
         const updatedSteps = [...prev.steps];
@@ -127,30 +127,38 @@ export function useWidgetEventHandler({
 
         // Update steps based on route execution state
         steps.forEach((step: RouteStep) => {
-          if (step.execution) {
-            const stepIndex = updatedSteps.findIndex((s) => s.id === step.id);
-            if (stepIndex !== -1) {
-              const execStatus = step.execution.status;
-              updatedSteps[stepIndex] = {
-                ...updatedSteps[stepIndex],
-                status:
-                  execStatus === "DONE"
-                    ? "completed"
-                    : execStatus === "FAILED"
-                      ? "failed"
-                      : execStatus === "PENDING"
-                        ? "active"
-                        : "pending",
-                txHash: step.execution.txHash || updatedSteps[stepIndex].txHash,
-              };
+          if (!step.execution) {
+            return;
+          }
+          const stepIndex = updatedSteps.findIndex((s) => s.id === step.id);
+          if (stepIndex === -1) {
+            return;
+          }
+          const execStatus = step.execution.status;
+          let stepExecStatus: StepStatus = "pending";
+          if (execStatus === "DONE") {
+            stepExecStatus = "completed";
+          }
+          if (execStatus === "FAILED") {
+            stepExecStatus = "failed";
+          }
+          if (execStatus === "PENDING") {
+            stepExecStatus = "active";
+          }
 
-              if (execStatus === "DONE" && stepIndex >= currentStepIndex) {
-                currentStepIndex = stepIndex + 1;
-              }
-              if (!txHash && step.execution.txHash) {
-                txHash = step.execution.txHash;
-              }
-            }
+          updatedSteps[stepIndex] = {
+            ...updatedSteps[stepIndex],
+            status: stepExecStatus,
+            txHash: step.execution.txHash || updatedSteps[stepIndex].txHash,
+          };
+
+          if (execStatus === "DONE" && stepIndex >= currentStepIndex) {
+            currentStepIndex = stepIndex + 1;
+          }
+
+          // step tx has completed ?
+          if (!txHash && step.execution.txHash) {
+            txHash = step.execution.txHash;
           }
         });
 

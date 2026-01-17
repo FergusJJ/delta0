@@ -1,6 +1,6 @@
-import type { BridgeStep, BridgeStatus } from "./types";
-import s from "./HyperBridge.module.css";
-
+import type { BridgeStep, BridgeStatus } from "../../types";
+import s from "./BridgeProgress.module.css";
+import s_ from "../../HyperBridge.module.css";
 interface BridgeProgressProps {
   status: BridgeStatus;
   steps: BridgeStep[];
@@ -30,7 +30,6 @@ function StepTypeLabel({ type }: { type: BridgeStep["type"] }) {
   };
   return <span className={s.stepType}>{labels[type] || "Step"}</span>;
 }
-
 export default function BridgeProgress({
   status,
   steps,
@@ -62,7 +61,7 @@ export default function BridgeProgress({
         )}
       </h3>
 
-      {error && <div className={s.errorMessage}>{error}</div>}
+      {error && <div className={s_.errorMessage}>{error}</div>}
 
       <div className={s.stepsList}>
         {steps.map((step, index) => (

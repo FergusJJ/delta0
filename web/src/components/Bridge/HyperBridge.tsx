@@ -1,9 +1,8 @@
 import { useState, useCallback } from "react";
-import { useActiveAccount, ConnectButton } from "thirdweb/react";
+import { useActiveAccount } from "thirdweb/react";
 import client from "../../util/client";
-import HyperBridgeWidget from "./HyperBridgeWidget";
-import BridgeProgress from "./BridgeProgress";
-import RouteDetails from "./RouteDetails";
+import HyperBridgeWidget from "./Components/HyperBridgeWidget/HyperBridgeWidget";
+import RouteDetails from "./Components/RouteDetails/RouteDetails";
 import { useWidgetEventHandler } from "./hooks/useWidgetEventHandler";
 import {
   useBridgeStatus,
@@ -11,6 +10,8 @@ import {
 } from "./hooks/useBridgeStatus";
 import type { BridgeState, BridgeStep } from "./types";
 import s from "./HyperBridge.module.css";
+import ConnectButton from "./Components/ConnectButton/ConnectButton";
+import BridgeProgress from "./Components/BrigeProgress/BridgeProgress";
 
 function HyperBridgeContent() {
   const [bridgeState, setBridgeState] = useState<BridgeState>(
@@ -58,7 +59,10 @@ function HyperBridgeContent() {
 
   return (
     <div className={s.grid}>
-      <div className={s.widgetColumn} style={{ height: 'auto', maxHeight: 'none' }}>
+      <div
+        className={s.widgetColumn}
+        style={{ height: "auto", maxHeight: "none" }}
+      >
         <HyperBridgeWidget />
       </div>
       <div className={s.infoColumn}>
@@ -74,7 +78,7 @@ function HyperBridgeContent() {
   );
 }
 
-export default function HyperBridge() {
+export default function Bridge() {
   const account = useActiveAccount();
 
   if (!account) {

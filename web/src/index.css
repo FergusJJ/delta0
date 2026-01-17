@@ -13,12 +13,15 @@
 
 /* Hide scrollbars globally while maintaining scroll functionality */
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
 *::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 html {
@@ -76,23 +79,4 @@ body {
 
 #root {
   min-height: 100vh;
-}
-
-/* Override LI.FI widget height constraints to allow full expansion */
-[id*="widget-app-expanded-container"],
-[class*="widget-app-expanded"],
-[class*="WidgetContainer"],
-[class*="lifi-widget"] {
-  max-height: none !important;
-  height: auto !important;
-  overflow: visible !important;
-}
-
-[id*="widget-app-expanded-container"] > div,
-[class*="widget-app-expanded"] > div,
-[class*="WidgetContainer"] > div,
-[class*="lifi-widget"] > div {
-  max-height: none !important;
-  height: auto !important;
-  overflow: visible !important;
 }

@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { fetchBridgeStatus, parseStatusToSteps, isTerminalStatus } from '../utils/statusApi';
-import { STATUS_POLL_INTERVAL } from '../constants';
-import type { BridgeState, BridgeStep } from '../types';
+import { useEffect, useRef } from "react";
+import {
+  fetchBridgeStatus,
+  parseStatusToSteps,
+  isTerminalStatus,
+} from "../utils/statusApi";
+import type { BridgeState, BridgeStep } from "../types";
+import { STATUS_POLL_INTERVAL } from "@constants/hyperbridge";
 
 // Hook to poll LI.FI Status API for detailed step-by-step bridge progress
 // Docs: https://docs.li.fi/introduction/user-flows-and-examples/status-tracking
@@ -9,7 +13,7 @@ interface UseBridgeStatusProps {
   txHash?: string;
   isExecuting: boolean;
   onStepsUpdate: (steps: BridgeStep[]) => void;
-  onStatusChange: (status: 'completed' | 'failed') => void;
+  onStatusChange: (status: "completed" | "failed") => void;
 }
 
 export function useBridgeStatus({
@@ -45,10 +49,10 @@ export function useBridgeStatus({
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
-          onStatusChange(response.status === 'DONE' ? 'completed' : 'failed');
+          onStatusChange(response.status === "DONE" ? "completed" : "failed");
         }
       } catch (error) {
-        console.error('Failed to fetch bridge status:', error);
+        console.error("Failed to fetch bridge status:", error);
       }
     };
 
@@ -69,7 +73,7 @@ export function useBridgeStatus({
 
 export function createInitialBridgeState(): BridgeState {
   return {
-    status: 'idle',
+    status: "idle",
     currentStep: 0,
     steps: [],
   };
