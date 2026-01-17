@@ -11,7 +11,7 @@ type YieldData = {
   weeklyYield: number;
   monthlyYield: number;
   tvl: string;
-  hedgeRatio: number;
+  // hedgeRatio: number;
 
   fundingRate: number;
   fundingTimeMs: number | null;
@@ -33,7 +33,7 @@ const BASE: Record<Asset, YieldData> = {
     weeklyYield: 0.098,
     monthlyYield: 0.412,
     tvl: "$6.8M",
-    hedgeRatio: 99.1,
+    // hedgeRatio: 99.1,
     fundingRate: 0,
     fundingTimeMs: null,
   },
@@ -43,7 +43,7 @@ const BASE: Record<Asset, YieldData> = {
     weeklyYield: 0.148,
     monthlyYield: 0.643,
     tvl: "$12.4M",
-    hedgeRatio: 98.7,
+    // hedgeRatio: 98.7,
     fundingRate: 0,
     fundingTimeMs: null,
   },
@@ -53,7 +53,7 @@ const BASE: Record<Asset, YieldData> = {
     weeklyYield: 0.195,
     monthlyYield: 0.821,
     tvl: "$3.1M",
-    hedgeRatio: 97.9,
+    // hedgeRatio: 97.9,
     fundingRate: 0,
     fundingTimeMs: null,
   },
@@ -63,7 +63,7 @@ const BASE: Record<Asset, YieldData> = {
     weeklyYield: 0.126,
     monthlyYield: 0.541,
     tvl: "$1.9M",
-    hedgeRatio: 98.2,
+    // hedgeRatio: 98.2,
     fundingRate: 0,
     fundingTimeMs: null,
   },
@@ -73,7 +73,7 @@ const BASE: Record<Asset, YieldData> = {
     weeklyYield: 0.091,
     monthlyYield: 0.395,
     tvl: "$1.1M",
-    hedgeRatio: 97.6,
+    // hedgeRatio: 97.6,
     fundingRate: 0,
     fundingTimeMs: null,
   },
@@ -224,7 +224,7 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
 
               <div className={s.statsRow}>
                 <Stat label="TVL" value={d.tvl} isLoading={isLoading} />
-                <Stat label="Hedge" value={`${d.hedgeRatio}%`} isLoading={isLoading} />
+                {/* <Stat label="Hedge" value={`${d.hedgeRatio}%`} isLoading={isLoading} /> */}
                 <Stat label="APY" value={`${funding1yPct.toFixed(2)}%`} isLoading={isLoading} />
               </div>
 
