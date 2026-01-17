@@ -17,12 +17,17 @@ type FeatureGridProps = {
    * - "vertical": items stacked in rows
    */
   direction?: "horizontal" | "vertical";
+  /**
+   * Hide the horizontal and vertical divider lines.
+   */
+  hideLines?: boolean;
 };
 
 export function FeatureGrid({
   children,
   layout,
   direction = "horizontal",
+  hideLines = false,
 }: FeatureGridProps) {
   const childArray = Children.toArray(children);
   const isVertical = direction === "vertical";
@@ -40,7 +45,7 @@ export function FeatureGrid({
     : { gridTemplateColumns: gridTemplate };
 
   return (
-    <div className={s.gridWrapper} data-direction={direction}>
+    <div className={s.gridWrapper} data-direction={direction} data-hide-lines={hideLines || undefined}>
       <div className={s.grid} style={gridStyle}>
         {childArray.map((child, index) => (
           <div

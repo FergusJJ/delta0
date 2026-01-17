@@ -29,6 +29,7 @@
   display: grid;
   position: relative;
   align-items: stretch;
+  gap: 4px;
 }
 
 .gridItem {
@@ -41,7 +42,7 @@
   position: absolute;
   top: 0px;
   bottom: -20px;
-  right: 0;
+  right: 0px;
   width: 1px;
   background: rgba(255, 255, 255, 0.1);
 }
@@ -72,4 +73,11 @@
   right: 0;
   width: auto;
   height: 1px;
+}
+
+/* Hide all lines when hideLines prop is true */
+.gridWrapper[data-hide-lines]::before,
+.gridWrapper[data-hide-lines]::after,
+.gridWrapper[data-hide-lines] .gridItem::after {
+  display: none;
 }
