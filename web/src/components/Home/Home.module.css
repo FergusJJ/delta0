@@ -14,7 +14,9 @@
 .copyWrapper {
   display: flex;
   flex-direction: column;
-  margin-top: 50px;
+  align-items: center;
+  text-align: center;
+  margin-top: 90px;
   max-width: 50%;
 }
 
@@ -22,10 +24,12 @@
   font-size: 82px;
   font-weight: 700;
   color: var(--accent-green);
-  line-height: 0.5rem;
+  line-height: 1.1;
 }
 
 .tagline {
-  font-size: 56px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-top: 16px;
 }

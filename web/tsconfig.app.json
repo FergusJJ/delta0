@@ -32,7 +32,8 @@
       "@components/*": ["./src/components/*"],
       "@public/*": ["./public/*"],
       "@util/*": ["./src/util/*"],
-      "@service/*": ["./src/service/*"]
+      "@service/*": ["./src/service/*"],
+      "@constants/*": ["./src/constants/*"]
     }
   },
   "include": ["src"]

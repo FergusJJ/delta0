@@ -2,7 +2,8 @@ import Banner from "./components/Banner/Banner";
 import Home from "./components/Home/Home";
 import s from "./App.module.css";
 import Account from "./components/Account/Account";
-import Bridge from "./components/Bridge/Bridge";
+// import Bridge from "./components/Bridge/Bridge";
+import Bridge from "./components/Bridge";
 import { Route, Routes } from "react-router-dom";
 /*
  * Need:
@@ -31,6 +32,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/account" element={<Account />} />
         <Route path="/bridge" element={<Bridge />} />
+        {/* <Route path="/hyperbridge" element={<HyperBridge />} /> */}
       </Routes>
 
       {/* location.pathname === "/" ? (
@@ -45,3 +47,4 @@ function App() {
 }
 
 export default App;
+

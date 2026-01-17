@@ -6,9 +6,8 @@ import CallToAction from "./Components/CallToAction/CallToAction";
 import DAppDisplay from "./Components/DAppDisplay/DAppDisplay";
 
 function HomeCopy() {
-  const title = "Delta0";
-  const tagline =
-    "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur";
+  const title = "Seamless DeFi, Simplified";
+  const tagline = "Experience seamless, secure digital asset management.";
   return (
     <div className={s.copyWrapper}>
       <p className={s.title}>{title}</p>
