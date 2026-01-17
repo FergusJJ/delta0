@@ -4,6 +4,7 @@ import WhySection from "./Components/WhySection/WhySection";
 import HowItWorks from "./Components/HowItWorks/HowItWorks";
 import CallToAction from "./Components/CallToAction/CallToAction";
 import DAppDisplay from "./Components/DAppDisplay/DAppDisplay";
+
 function HomeCopy() {
   const title = "Delta0";
   const tagline =
