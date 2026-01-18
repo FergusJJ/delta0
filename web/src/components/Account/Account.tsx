@@ -1,17 +1,29 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MdArrowDownward,
   MdArrowUpward,
   MdOutlineArrowOutward,
 } from "react-icons/md";
-import { useActiveWallet, useConnectModal } from "thirdweb/react";
+import {
+  useActiveAccount,
+  useActiveWallet,
+  useConnectModal,
+} from "thirdweb/react";
+import { parseUnits } from "viem";
 import client from "../../util/client";
+import { useDeposit, useWithdraw } from "../../hooks/useVaultContract";
+import { hyperEVMTestnet } from "../../config/chains";
 
 import VaultBalances from "../VaultBalances/VaultBalances";
 import CurrentYield from "../CurrentYield/CurrentYield";
 import ExchangeChart from "../ExchangeChart";
 import Button from "../Button/Button";
 import s from "./Account.module.css";
+import type { ContractSymbol } from "src/contracts/vault";
+import TokenNameAdressMapping from "@constants/tokens";
+import { ChainId } from "@lifi/sdk";
+import { useTokenPrices } from "../../hooks/useTokenPrices";
+import { sendVaultStatus } from "@components/Bridge/utils/balanceApi";
 
 type VaultToken = {
   symbol: string;
@@ -19,11 +31,12 @@ type VaultToken = {
   amount: number;
 };
 
-const TOKEN_CATALOG: Array<{ symbol: string; address: `0x${string}` }> = [
-  { symbol: "SOL", address: "0x1111111111111111111111111111111111111111" },
-  { symbol: "ETH", address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" },
-  { symbol: "BTC", address: "0xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
-];
+const TOKEN_CATALOG: Array<{ symbol: ContractSymbol; address: `0x${string}` }> =
+  [
+    { symbol: "SOL", address: TokenNameAdressMapping[ChainId.HYP]["USOL"] },
+    { symbol: "ETH", address: TokenNameAdressMapping[ChainId.HYP]["UETH"] },
+    { symbol: "BTC", address: TokenNameAdressMapping[ChainId.HYP]["UBTC"] },
+  ];
 
 const formatAmount = (x: number) =>
   x.toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -31,7 +44,6 @@ const formatAmount = (x: number) =>
 export default function Account() {
   const wallet = useActiveWallet();
   const { connect, isConnecting } = useConnectModal();
-
   const handleConnect = async () => {
     const w = await connect({ client });
     console.log("connected to", w);
@@ -65,25 +77,90 @@ export default function Account() {
 }
 
 function AccountAuthed() {
+  const prices = useTokenPrices();
+  const account = useActiveAccount();
   const [isLoading, setIsLoading] = useState(false);
+  const [chainId] = useState(hyperEVMTestnet.id); // Use testnet by default
 
-  const [vaultHoldings, setVaultHoldings] = useState<VaultToken[]>([
-    {
-      symbol: "SOL (in USDC)",
-      address: "0x1111111111111111111111111111111111111111",
-      amount: 1234.56,
-    },
-    {
-      symbol: "ETH (in USDC)",
-      address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      amount: 0.42,
-    },
-    {
-      symbol: "BTC (in USDC)",
-      address: "0xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      amount: 345.89,
-    },
-  ]);
+  const { deposit, isPending: isDepositing } = useDeposit(chainId);
+  const { withdraw, isPending: isWithdrawing } = useWithdraw(chainId);
+
+  // Raw token balances (in token units, not USD)
+  const [balances, setBalances] = useState<Record<`0x${string}`, number>>({
+    [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 0, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 0, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 0, // dummy data
+  });
+
+  useEffect(() => {
+    if (!account?.address) {
+      setBalances({
+        [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 0,
+        [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 0,
+        [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 0,
+      });
+      return;
+    }
+
+    const getBalances = async () => {
+      const promises = [
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["USOL"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["UETH"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["UBTC"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+      ];
+      const resp = await Promise.all(promises);
+      setBalances(
+        resp.reduce(
+          (acc, { tokenAddress, amount }) => ({
+            ...acc,
+            [tokenAddress]: amount,
+          }),
+          {} as Record<`0x${string}`, number>,
+        ),
+      );
+    };
+    void getBalances();
+  }, [account]);
+
+  // Derive vault holdings (USD values) from balances and prices
+  const vaultHoldings = useMemo<VaultToken[]>(
+    () => [
+      {
+        symbol: "SOL (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["USOL"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["USOL"]] ?? 0) *
+          (prices["SOL"] ?? 0),
+      },
+      {
+        symbol: "ETH (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["UETH"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["UETH"]] ?? 0) *
+          (prices["ETH"] ?? 0),
+      },
+      {
+        symbol: "BTC (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["UBTC"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["UBTC"]] ?? 0) *
+          (prices["BTC"] ?? 0),
+      },
+    ],
+    [balances, prices],
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [mode, setMode] = useState<"deposit" | "withdraw">("deposit");
@@ -121,49 +198,54 @@ function AccountAuthed() {
   const handleWithdraw = () => openModal("withdraw");
   const handleCloseModal = () => setModalOpen(false);
 
-  const handleApplyAction = () => {
+  const handleApplyAction = async () => {
     const amt = Number(amountStr);
+    if (!account?.address) {
+      return;
+    }
     if (!Number.isFinite(amt) || amt <= 0) return;
 
     const tokenMeta = TOKEN_CATALOG.find((t) => t.symbol === selectedSymbol);
     if (!tokenMeta) return;
 
-    setVaultHoldings((prev) => {
-      const idx = prev.findIndex((x) => x.symbol === tokenMeta.symbol);
-      const next = [...prev];
+    try {
+      const amountInWei = parseUnits(amountStr, 18);
 
+      let totals: { tokenAddress: `0x${string}`; amount: number };
       if (mode === "deposit") {
-        if (idx >= 0) {
-          next[idx] = { ...next[idx], amount: next[idx].amount + amt };
-        } else {
-          next.push({
-            symbol: tokenMeta.symbol,
-            address: tokenMeta.address,
-            amount: amt,
-          });
-        }
-        return next;
+        await deposit(amountInWei, selectedSymbol);
+        totals = await sendVaultStatus({
+          tokenAddress: tokenMeta.address,
+          walletAddress: account.address as `0x${string}`,
+          amount: amt,
+        });
+      } else {
+        await withdraw(amountInWei, selectedSymbol);
+        totals = await sendVaultStatus({
+          tokenAddress: tokenMeta.address,
+          walletAddress: account.address as `0x${string}`,
+          amount: -amt,
+        });
       }
 
-      if (idx < 0) return prev;
+      // Update raw balances with the totals returned from the backend
+      setBalances((prev) => ({
+        ...prev,
+        [totals.tokenAddress]: totals.amount,
+      }));
 
-      const current = next[idx].amount;
-      const newAmt = current - amt;
-
-      if (newAmt > 0) {
-        next[idx] = { ...next[idx], amount: newAmt };
-        return next;
-      }
-
-      next.splice(idx, 1);
-      return next;
-    });
-
-    handleCloseModal();
+      handleCloseModal();
+    } catch (err) {
+      console.error("Transaction failed:", err);
+    }
   };
 
   const handleSymbolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSymbol(e.target.value);
+    const val = e.target.value;
+    if (val !== "SOL" && val !== "BTC" && val !== "ETH") {
+      return;
+    }
+    setSelectedSymbol(val);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,8 +254,12 @@ function AccountAuthed() {
 
   const modalTitle =
     mode === "deposit" ? "Deposit to Vault" : "Withdraw from Vault";
-  const actionLabel =
-    mode === "deposit" ? "Confirm Deposit" : "Confirm Withdraw";
+  const isPending = isDepositing || isWithdrawing;
+  const actionLabel = isPending
+    ? "Confirming..."
+    : mode === "deposit"
+      ? "Confirm Deposit"
+      : "Confirm Withdraw";
 
   const depositLabel = "Deposit";
   const withdrawLabel = "Withdraw";
@@ -279,21 +365,30 @@ function AccountAuthed() {
             </div>
 
             <div className={s.modalActions}>
-              <button className={s.ghostBtn} onClick={handleCloseModal}>
-                Cancel
-              </button>
-              <button
-                className={mode === "deposit" ? s.primaryBtn : s.secondaryBtn}
+              <Button
+                label={"Cancel"}
+                onClick={handleCloseModal}
+                color={"var(--text-secondary)"}
+                bgColor={"var(--border-subtle)"}
+              />
+              <Button
+                label={actionLabel}
                 onClick={handleApplyAction}
-                disabled={isAmountInvalid}
-              >
-                {actionLabel}
-              </button>
+                color={
+                  isPending || isAmountInvalid
+                    ? "var(--text-secondary)"
+                    : "var(--bg-dark)"
+                }
+                bgColor={
+                  isPending || isAmountInvalid
+                    ? "var(--border-subtle)"
+                    : "var(--accent-green)"
+                }
+                disabled={isAmountInvalid || isPending}
+              />
             </div>
 
-            <div className={s.modalHint}>
-              Mock mode: updates UI only (no smart contract hooked up yet).
-            </div>
+            <div className={s.modalHint}>Connected to HyperEVM Testnet</div>
           </div>
         </div>
       )}

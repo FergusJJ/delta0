@@ -10,7 +10,7 @@ const STATUS_API_URL = "https://li.quest/v1/status";
 export async function fetchBridgeStatus(
   txHash: string,
 ): Promise<LiFiStatusResponse> {
-  const response = await fetch(`${STATUS_API_URL}?txHash=${txHash}`);
+  const response = await fetch(`${STATUS_API_URL}/?txHash=${txHash}`);
   if (!response.ok) {
     throw new Error(`Status API error: ${response.status}`);
   }

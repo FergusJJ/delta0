@@ -74,6 +74,15 @@ const widgetConfig: WidgetConfig = {
       maxHeight: "none",
       height: "auto",
     },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            color: "#fafafa",
+          },
+        },
+      },
+    },
   },
 };
 
