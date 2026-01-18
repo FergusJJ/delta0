@@ -1,10 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   MdArrowDownward,
   MdArrowUpward,
   MdOutlineArrowOutward,
 } from "react-icons/md";
-import { useActiveWallet, useConnectModal } from "thirdweb/react";
+import {
+  useActiveAccount,
+  useActiveWallet,
+  useConnectModal,
+} from "thirdweb/react";
 import { parseUnits } from "viem";
 import client from "../../util/client";
 import { useDeposit, useWithdraw } from "../../hooks/useVaultContract";
@@ -19,6 +23,7 @@ import type { ContractSymbol } from "src/contracts/vault";
 import TokenNameAdressMapping from "@constants/tokens";
 import { ChainId } from "@lifi/sdk";
 import { useTokenPrices } from "../../hooks/useTokenPrices";
+import { sendVaultStatus } from "@components/Bridge/utils/balanceApi";
 
 type VaultToken = {
   symbol: string;
@@ -73,6 +78,7 @@ export default function Account() {
 
 function AccountAuthed() {
   const prices = useTokenPrices();
+  const account = useActiveAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [chainId] = useState(hyperEVMTestnet.id); // Use testnet by default
 
@@ -81,10 +87,52 @@ function AccountAuthed() {
 
   // Raw token balances (in token units, not USD)
   const [balances, setBalances] = useState<Record<`0x${string}`, number>>({
-    [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 1, // dummy data
-    [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 1, // dummy data
-    [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 1, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 0, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 0, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 0, // dummy data
   });
+
+  useEffect(() => {
+    if (!account?.address) {
+      setBalances({
+        [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 0,
+        [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 0,
+        [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 0,
+      });
+      return;
+    }
+
+    const getBalances = async () => {
+      const promises = [
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["USOL"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["UETH"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+        sendVaultStatus({
+          tokenAddress: TokenNameAdressMapping[ChainId.HYP]["UBTC"],
+          walletAddress: account.address as `0x${string}`,
+          amount: 0,
+        }),
+      ];
+      const resp = await Promise.all(promises);
+      setBalances(
+        resp.reduce(
+          (acc, { tokenAddress, amount }) => ({
+            ...acc,
+            [tokenAddress]: amount,
+          }),
+          {} as Record<`0x${string}`, number>,
+        ),
+      );
+    };
+    void getBalances();
+  }, [account]);
 
   // Derive vault holdings (USD values) from balances and prices
   const vaultHoldings = useMemo<VaultToken[]>(
@@ -152,6 +200,9 @@ function AccountAuthed() {
 
   const handleApplyAction = async () => {
     const amt = Number(amountStr);
+    if (!account?.address) {
+      return;
+    }
     if (!Number.isFinite(amt) || amt <= 0) return;
 
     const tokenMeta = TOKEN_CATALOG.find((t) => t.symbol === selectedSymbol);
@@ -160,24 +211,28 @@ function AccountAuthed() {
     try {
       const amountInWei = parseUnits(amountStr, 18);
 
+      let totals: { tokenAddress: `0x${string}`; amount: number };
       if (mode === "deposit") {
         await deposit(amountInWei, selectedSymbol);
+        totals = await sendVaultStatus({
+          tokenAddress: tokenMeta.address,
+          walletAddress: account.address as `0x${string}`,
+          amount: amt,
+        });
       } else {
         await withdraw(amountInWei, selectedSymbol);
+        totals = await sendVaultStatus({
+          tokenAddress: tokenMeta.address,
+          walletAddress: account.address as `0x${string}`,
+          amount: -amt,
+        });
       }
 
-      // Update raw balances after successful transaction
-      setBalances((prev) => {
-        const address = tokenMeta.address;
-        const currentBalance = prev[address] ?? 0;
-
-        if (mode === "deposit") {
-          return { ...prev, [address]: currentBalance + amt };
-        } else {
-          const newBalance = Math.max(0, currentBalance - amt);
-          return { ...prev, [address]: newBalance };
-        }
-      });
+      // Update raw balances with the totals returned from the backend
+      setBalances((prev) => ({
+        ...prev,
+        [totals.tokenAddress]: totals.amount,
+      }));
 
       handleCloseModal();
     } catch (err) {

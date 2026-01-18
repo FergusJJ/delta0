@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import config from "../config/config";
 
 export function useTokenPrices() {
   const [prices, setPrices] = useState<Record<string, number>>({});
