@@ -186,10 +186,18 @@ function AccountAuthed() {
       } else {
         await withdraw(amountInWei, selectedSymbol);
       }
+
+      // Refetch balances after successful transaction
+      const [newUserTVL, newTokenBalance] = await Promise.all([
+        readUserTVL(account.address),
+        readTokenBalance(account.address, "ETH"),
+      ]);
+      setUserTVL(newUserTVL);
+      setSelectedTokenBalance(Number(newTokenBalance) / 1e18);
+
       handleCloseModal();
     } catch (err) {
       console.error("Transaction failed:", err);
-      handleCloseModal();
     }
   };
 
