@@ -15,14 +15,18 @@ const queryClient = new QueryClient({
   },
 });
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <ThirdwebProvider>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </ThirdwebProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+const container = document.getElementById("root");
+
+if (container) {
+  createRoot(container).render(
+    <StrictMode>
+      <BrowserRouter>
+        <ThirdwebProvider>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </ThirdwebProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  );
+}
