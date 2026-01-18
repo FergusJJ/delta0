@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import s from "./CurrentYield.module.css";
 import { HttpTransport } from "@nktkas/hyperliquid";
 import { fundingHistory } from "@nktkas/hyperliquid/api/info";
@@ -90,10 +90,15 @@ function formatAgo(diffMs: number) {
   return `${d}d ago`;
 }
 
-export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading = false }: Props) {
-  const [dataByAsset, setDataByAsset] = useState<Record<Asset, YieldData>>(BASE);
+export default memo(function CurrentYield({
+  refreshMs = 10_000,
+  isLoading: extLoading = false,
+}: Props) {
+  const [dataByAsset, setDataByAsset] =
+    useState<Record<Asset, YieldData>>(BASE);
   const [isPolling, setIsPolling] = useState(false);
-  const isLoading = extLoading || isPolling;
+  // Only use extLoading for skeleton states, isPolling just shows spinner
+  const isLoading = extLoading;
 
   useEffect(() => {
     let cancelled = false;
@@ -106,7 +111,10 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
 
         const results = await Promise.all(
           ASSETS.map(async (coin) => {
-            const rows = await fundingHistory({ transport }, { coin, startTime, endTime });
+            const rows = await fundingHistory(
+              { transport },
+              { coin, startTime, endTime },
+            );
 
             let latestTime = -Infinity;
             let latestRate: number | null = null;
@@ -120,8 +128,12 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
               }
             }
 
-            return [coin, latestRate, latestTime > 0 ? latestTime : null] as const;
-          })
+            return [
+              coin,
+              latestRate,
+              latestTime > 0 ? latestTime : null,
+            ] as const;
+          }),
         );
 
         if (cancelled) return;
@@ -158,7 +170,10 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
     <section className={s.card}>
       <div className={s.header}>
         <h2 className={s.title}>Current Yield</h2>
-        <span className={s.badge}>Delta Neutral</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {isPolling && <span className={s.spinner} />}
+          <span className={s.badge}>Delta Neutral</span>
+        </div>
       </div>
 
       <div className={s.assetsGrid}>
@@ -173,7 +188,9 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
           const funding1yPct = funding1mPct * 12;
 
           const updated =
-            d.fundingTimeMs == null ? "—" : formatAgo(Date.now() - d.fundingTimeMs);
+            d.fundingTimeMs == null
+              ? "—"
+              : formatAgo(Date.now() - d.fundingTimeMs);
 
           return (
             <div key={asset} className={s.assetCard}>
@@ -196,7 +213,9 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
                         {funding8hPct.toFixed(4)}
                       </span>
                       <span className={s.apyPercent}>%</span>
-                      <span style={{ marginLeft: 10, opacity: 0.7, fontSize: 12 }}>
+                      <span
+                        style={{ marginLeft: 10, opacity: 0.7, fontSize: 12 }}
+                      >
                         (1h: {funding1hPct >= 0 ? "+" : ""}
                         {funding1hPct.toFixed(5)}%)
                       </span>
@@ -225,7 +244,11 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
               <div className={s.statsRow}>
                 <Stat label="TVL" value={d.tvl} isLoading={isLoading} />
                 {/* <Stat label="Hedge" value={`${d.hedgeRatio}%`} isLoading={isLoading} /> */}
-                <Stat label="APY" value={`${funding1yPct.toFixed(2)}%`} isLoading={isLoading} />
+                <Stat
+                  label="APY"
+                  value={`${funding1yPct.toFixed(2)}%`}
+                  isLoading={isLoading}
+                />
               </div>
 
               <div className={s.divider} />
@@ -236,13 +259,14 @@ export default function CurrentYield({ refreshMs = 10_000, isLoading: extLoading
 
       <div className={s.strategyInfo}>
         <p className={s.strategyText}>
-          Yield is generated through delta-neutral hedging strategies, minimizing
-          directional exposure while capturing funding rates and basis spreads.
+          Yield is generated through delta-neutral hedging strategies,
+          minimizing directional exposure while capturing funding rates and
+          basis spreads.
         </p>
       </div>
     </section>
   );
-}
+});
 
 function MetricCard({
   label,

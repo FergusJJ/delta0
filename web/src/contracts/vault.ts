@@ -6,42 +6,56 @@ import { hyperEVM, hyperEVMTestnet } from "../config/chains";
 // After running `forge build`, copy the "abi" array from:
 //   out/YourContract.sol/YourContract.json
 // Ensure you keep `as const` at the end for TypeScript type inference.
+//
+export type ContractSymbol = "SOL" | "ETH" | "BTC";
+
 export const VAULT_ABI = [
   {
     type: "function",
-    name: "deposit",
-    inputs: [{ name: "amount", type: "uint256", internalType: "uint256" }],
+    name: "increment",
+    inputs: [],
     outputs: [],
     stateMutability: "nonpayable",
   },
   {
     type: "function",
-    name: "withdraw",
-    inputs: [{ name: "amount", type: "uint256", internalType: "uint256" }],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
-    name: "balanceOf",
-    inputs: [{ name: "account", type: "address", internalType: "address" }],
+    name: "number",
+    inputs: [],
     outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
     stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "setNumber",
+    inputs: [{ name: "newNumber", type: "uint256", internalType: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
 ] as const;
 
 // TODO: Replace these placeholder addresses with actual deployed contract addresses.
 // After deploying via Foundry (`forge create` or `forge script`), paste the addresses here.
-export const VAULT_ADDRESSES: Record<number, `0x${string}`> = {
+export const VAULT_ADDRESSES: Record<
+  number,
+  Record<ContractSymbol, `0x${string}`>
+> = {
   // TODO: Set mainnet address after deploying to HyperEVM mainnet (chain ID 999)
-  [hyperEVM.id]: "0x0000000000000000000000000000000000000000",
+  [hyperEVM.id]: {
+    ["SOL"]: "0x0",
+    ["ETH"]: "0x0",
+    ["BTC"]: "0x0",
+  },
   // TODO: Set testnet address after deploying to HyperEVM testnet (chain ID 998)
-  [hyperEVMTestnet.id]: "0x0000000000000000000000000000000000000000",
+  [hyperEVMTestnet.id]: {
+    ["SOL"]: "0x3Cf77F90024ad43eC32C44aEa94a207D1852B41A",
+    ["ETH"]: "0x3D1C434D77754bF4324541B685C60cEff8C97A64",
+    ["BTC"]: "0x0",
+  },
 };
 
-export function getVaultContract(chainId: number) {
+export function getVaultContract(chainId: number, symbol: ContractSymbol) {
   const chain = chainId === hyperEVMTestnet.id ? hyperEVMTestnet : hyperEVM;
-  const address = VAULT_ADDRESSES[chainId];
+  const address = VAULT_ADDRESSES[chainId][symbol];
 
   if (!address) {
     throw new Error(`No vault address configured for chain ${chainId}`);

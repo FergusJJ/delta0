@@ -1,17 +1,27 @@
 import { useSendTransaction } from "thirdweb/react";
 import { prepareContractCall } from "thirdweb";
-import { getVaultContract } from "../contracts/vault";
+import { getVaultContract, type ContractSymbol } from "../contracts/vault";
+
+/*
+ * deposit, withdraw will both only take an amount
+ * - the symbol chosen in the menu will decide which smart contact we call
+ *   - so probably want to export a hook/function which essentially acts as a
+ *   switch statement and then returns the correct abi
+ * */
 
 export function useDeposit(chainId: number) {
   const { mutateAsync: sendTx, isPending, error } = useSendTransaction();
 
-  const deposit = async (amount: bigint) => {
-    const contract = getVaultContract(chainId);
+  const deposit = async (amount: bigint, symbol: ContractSymbol) => {
+    const contract = getVaultContract(chainId, symbol);
+    console.log(
+      `deposit called [amount]: [${amount}] [symbol]: [${symbol}] [contract]: [${contract.address}]`,
+    );
     const tx = prepareContractCall({
       contract,
       // TODO: Update method name to match your contract's deposit function.
       // This must match a function name in VAULT_ABI (e.g., "deposit", "stake", "supply").
-      method: "deposit",
+      method: "setNumber", // "deposit",
       // TODO: Update params to match your contract's function signature.
       // Current: deposit(uint256 amount)
       // If your function takes different params, update accordingly.
@@ -26,13 +36,16 @@ export function useDeposit(chainId: number) {
 export function useWithdraw(chainId: number) {
   const { mutateAsync: sendTx, isPending, error } = useSendTransaction();
 
-  const withdraw = async (amount: bigint) => {
-    const contract = getVaultContract(chainId);
+  const withdraw = async (amount: bigint, symbol: ContractSymbol) => {
+    const contract = getVaultContract(chainId, symbol);
+    console.log(
+      `withdraw called [amount]: [${amount}] [symbol]: [${symbol}] [contract]: [${contract.address}]`,
+    );
     const tx = prepareContractCall({
       contract,
       // TODO: Update method name to match your contract's withdraw function.
       // This must match a function name in VAULT_ABI (e.g., "withdraw", "unstake", "redeem").
-      method: "withdraw",
+      method: "increment", // "withdraw",
       // TODO: Update params to match your contract's function signature.
       // Current: withdraw(uint256 amount)
       // If your function takes different params, update accordingly.

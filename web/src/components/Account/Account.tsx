@@ -15,6 +15,10 @@ import CurrentYield from "../CurrentYield/CurrentYield";
 import ExchangeChart from "../ExchangeChart";
 import Button from "../Button/Button";
 import s from "./Account.module.css";
+import type { ContractSymbol } from "src/contracts/vault";
+import TokenNameAdressMapping from "@constants/tokens";
+import { ChainId } from "@lifi/sdk";
+import { useTokenPrices } from "../../hooks/useTokenPrices";
 
 type VaultToken = {
   symbol: string;
@@ -22,11 +26,12 @@ type VaultToken = {
   amount: number;
 };
 
-const TOKEN_CATALOG: Array<{ symbol: string; address: `0x${string}` }> = [
-  { symbol: "SOL", address: "0x1111111111111111111111111111111111111111" },
-  { symbol: "ETH", address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" },
-  { symbol: "BTC", address: "0xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
-];
+const TOKEN_CATALOG: Array<{ symbol: ContractSymbol; address: `0x${string}` }> =
+  [
+    { symbol: "SOL", address: TokenNameAdressMapping[ChainId.HYP]["USOL"] },
+    { symbol: "ETH", address: TokenNameAdressMapping[ChainId.HYP]["UETH"] },
+    { symbol: "BTC", address: TokenNameAdressMapping[ChainId.HYP]["UBTC"] },
+  ];
 
 const formatAmount = (x: number) =>
   x.toLocaleString(undefined, { maximumFractionDigits: 6 });
@@ -34,7 +39,6 @@ const formatAmount = (x: number) =>
 export default function Account() {
   const wallet = useActiveWallet();
   const { connect, isConnecting } = useConnectModal();
-
   const handleConnect = async () => {
     const w = await connect({ client });
     console.log("connected to", w);
@@ -68,29 +72,47 @@ export default function Account() {
 }
 
 function AccountAuthed() {
+  const prices = useTokenPrices();
   const [isLoading, setIsLoading] = useState(false);
   const [chainId] = useState(hyperEVMTestnet.id); // Use testnet by default
 
   const { deposit, isPending: isDepositing } = useDeposit(chainId);
   const { withdraw, isPending: isWithdrawing } = useWithdraw(chainId);
 
-  const [vaultHoldings, setVaultHoldings] = useState<VaultToken[]>([
-    {
-      symbol: "SOL (in USDC)",
-      address: "0x1111111111111111111111111111111111111111",
-      amount: 1234.56,
-    },
-    {
-      symbol: "ETH (in USDC)",
-      address: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
-      amount: 0.42,
-    },
-    {
-      symbol: "BTC (in USDC)",
-      address: "0xBbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      amount: 345.89,
-    },
-  ]);
+  // Raw token balances (in token units, not USD)
+  const [balances, setBalances] = useState<Record<`0x${string}`, number>>({
+    [TokenNameAdressMapping[ChainId.HYP]["USOL"]]: 1, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UETH"]]: 1, // dummy data
+    [TokenNameAdressMapping[ChainId.HYP]["UBTC"]]: 1, // dummy data
+  });
+
+  // Derive vault holdings (USD values) from balances and prices
+  const vaultHoldings = useMemo<VaultToken[]>(
+    () => [
+      {
+        symbol: "SOL (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["USOL"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["USOL"]] ?? 0) *
+          (prices["SOL"] ?? 0),
+      },
+      {
+        symbol: "ETH (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["UETH"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["UETH"]] ?? 0) *
+          (prices["ETH"] ?? 0),
+      },
+      {
+        symbol: "BTC (in USDC)",
+        address: TokenNameAdressMapping[ChainId.HYP]["UBTC"],
+        amount:
+          (balances[TokenNameAdressMapping[ChainId.HYP]["UBTC"]] ?? 0) *
+          (prices["BTC"] ?? 0),
+      },
+    ],
+    [balances, prices],
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [mode, setMode] = useState<"deposit" | "withdraw">("deposit");
@@ -139,41 +161,22 @@ function AccountAuthed() {
       const amountInWei = parseUnits(amountStr, 18);
 
       if (mode === "deposit") {
-        await deposit(amountInWei);
+        await deposit(amountInWei, selectedSymbol);
       } else {
-        await withdraw(amountInWei);
+        await withdraw(amountInWei, selectedSymbol);
       }
 
-      // Update local state after successful transaction
-      setVaultHoldings((prev) => {
-        const idx = prev.findIndex((x) => x.symbol === tokenMeta.symbol);
-        const next = [...prev];
+      // Update raw balances after successful transaction
+      setBalances((prev) => {
+        const address = tokenMeta.address;
+        const currentBalance = prev[address] ?? 0;
 
         if (mode === "deposit") {
-          if (idx >= 0) {
-            next[idx] = { ...next[idx], amount: next[idx].amount + amt };
-          } else {
-            next.push({
-              symbol: tokenMeta.symbol,
-              address: tokenMeta.address,
-              amount: amt,
-            });
-          }
-          return next;
+          return { ...prev, [address]: currentBalance + amt };
+        } else {
+          const newBalance = Math.max(0, currentBalance - amt);
+          return { ...prev, [address]: newBalance };
         }
-
-        if (idx < 0) return prev;
-
-        const current = next[idx].amount;
-        const newAmt = current - amt;
-
-        if (newAmt > 0) {
-          next[idx] = { ...next[idx], amount: newAmt };
-          return next;
-        }
-
-        next.splice(idx, 1);
-        return next;
       });
 
       handleCloseModal();
@@ -183,7 +186,11 @@ function AccountAuthed() {
   };
 
   const handleSymbolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedSymbol(e.target.value);
+    const val = e.target.value;
+    if (val !== "SOL" && val !== "BTC" && val !== "ETH") {
+      return;
+    }
+    setSelectedSymbol(val);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
